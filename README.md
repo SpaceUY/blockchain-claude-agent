@@ -834,8 +834,8 @@ correctness, and efficient ledger entry management.
 ### Starting from scratch
 
 ```bash
-# 1. Clone this template
-git clone <this-repo-url> my-protocol
+# 1. Clone this template (--recurse-submodules pulls the Metaplex skill)
+git clone --recurse-submodules <this-repo-url> my-protocol
 cd my-protocol
 
 # 2. Remove the example CLAUDE.md
@@ -869,6 +869,37 @@ cd /path/to/your-project
 # 3. Run claude /init if you don't have a CLAUDE.md yet, then append
 #    the relevant sections from this README to your CLAUDE.md
 ```
+
+### Cloning without `--recurse-submodules`
+
+If you already cloned the repo without the flag, initialize the submodules manually:
+
+```bash
+git submodule init
+git submodule update
+```
+
+### Updating plugins
+
+The Metaplex skill is a git submodule pointing to `metaplex-foundation/skill`. To pull the latest version:
+
+```bash
+# From the project root
+git submodule update --remote .agents/plugins/metaplex-skill
+
+# Or from inside the plugin directory
+cd .agents/plugins/metaplex-skill
+git pull origin main
+```
+
+After updating, commit the new submodule reference in the parent repo:
+
+```bash
+git add .agents/plugins/metaplex-skill
+git commit -m "chore: update metaplex skill to latest"
+```
+
+The other plugins (Trail of Bits, OpenZeppelin) are static copies. To update them, re-download from their repos or reinstall via `/plugin menu` and copy the new version into `.agents/plugins/`.
 
 ---
 

@@ -1,0 +1,3 @@
+[submodule ".agents/plugins/metaplex-skill"]
+	path = .agents/plugins/metaplex-skill
+	url = https://github.com/metaplex-foundation/skill.git
