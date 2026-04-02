@@ -1,6 +1,6 @@
 # Blockchain Agent Template for Claude Code
 
-A ready-to-use template that turns Claude Code into a **Senior Blockchain Security Engineer** using curated plugins from Trail of Bits and OpenZeppelin. Clone this repo, pick your blockchain, and get an AI agent that enforces security best practices, runs vulnerability scans, and guides you through audit preparation.
+A ready-to-use template that turns Claude Code into a **Senior Blockchain Security Engineer** using curated plugins from Trail of Bits, OpenZeppelin, and Metaplex. Clone this repo, pick your blockchain, and get an AI agent that enforces security best practices, runs vulnerability scans, and guides you through audit preparation.
 
 ## What's Inside
 
@@ -14,7 +14,8 @@ A ready-to-use template that turns Claude Code into a **Senior Blockchain Securi
         ├── building-secure-contracts/ # Trail of Bits — 11 vulnerability scanners & security advisors
         ├── entry-point-analyzer/      # Trail of Bits — Attack surface mapper
         ├── spec-to-code-compliance/   # Trail of Bits — Spec vs. implementation verifier
-        └── openzeppelin-skills/       # OpenZeppelin — Contract setup, development & upgrades
+        ├── openzeppelin-skills/       # OpenZeppelin — Contract setup, development & upgrades
+        └── metaplex-skill/            # Metaplex — Solana NFTs, tokens, cNFTs, candy machines, launches
 ```
 
 ## Quick Start
@@ -122,6 +123,33 @@ The `CLAUDE.md` included is pre-configured for **Solidity + Foundry**. If you're
 | `openzeppelin-skills:upgrade-cairo-contracts` | StarkNet | `replace_class_syscall`, UpgradeableComponent |
 | `openzeppelin-skills:upgrade-stellar-contracts` | Stellar/Soroban | Native WASM replacement, UpgradeableMigratable |
 | `openzeppelin-skills:upgrade-stylus-contracts` | Arbitrum Stylus | UUPS/Beacon via delegatecall, WASM reactivation |
+
+### Metaplex (`metaplex-skill`)
+
+**1 skill** covering the full Metaplex ecosystem on Solana — NFTs, tokens, compressed NFTs, candy machines, token launches, and autonomous agents.
+
+| Skill | What It Covers |
+|---|---|
+| `metaplex:metaplex` | Core (next-gen NFTs), Token Metadata (fungibles, legacy NFTs, pNFTs), Bubblegum (compressed NFTs), Candy Machine (NFT drops with guards), Genesis (token launches), Agent Registry (on-chain identity & delegation) |
+
+**Tool selection:** Prefer CLI (`mplx`) for direct execution. Use Umi SDK when the task requires code. Use Kit SDK only if the project uses `@solana/kit` with minimal dependencies.
+
+| Approach | When to Use |
+|---|---|
+| **CLI (`mplx`)** | Default — direct execution, no code needed. Supports Core, Token Metadata, Bubblegum, Candy Machine, Genesis, Agent Registry |
+| **Umi SDK** | User needs code — full programmatic access. All CLI operations plus DAS API queries, delegates, lock/unlock, print editions, plugin management |
+| **Kit SDK** | User specifically uses `@solana/kit`. Token Metadata only — no Core/Bubblegum/Genesis support |
+
+**Program IDs:**
+
+| Program | Address |
+|---|---|
+| Core | `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d` |
+| Token Metadata | `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s` |
+| Bubblegum V2 | `BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY` |
+| Core Candy Machine | `CMACYFENjoBMHzapRXyo1JZkVS6EtaDDzkjMrmQLvr4J` |
+| Genesis | `GNS1S5J5AspKXgpjz6SvKL66kPaKWAhaGRhCqPRxii2B` |
+| Agent Identity | `1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p` |
 
 ---
 
@@ -326,6 +354,11 @@ and efficient compute unit usage.
 |---|---|
 | Map attack surface | `entry-point-analyzer:entry-point-analyzer` |
 | Verify spec compliance | `spec-to-code-compliance:spec-to-code-compliance` |
+
+### Metaplex (NFTs, tokens, launches on Solana)
+| Trigger | Skill |
+|---|---|
+| Any Metaplex operation: Core NFTs, Token Metadata, Bubblegum (cNFTs), Candy Machine drops, Genesis token launches, Agent Registry | `metaplex:metaplex` |
 ```
 
 #### Security Patterns
@@ -337,6 +370,100 @@ and efficient compute unit usage.
 - Guard CPI calls — never allow arbitrary program IDs in cross-program invocations.
 - Use Anchor constraints (`#[account(has_one, constraint, seeds)]`) for declarative validation.
 - Validate sysvar accounts by address, not by deserialization alone.
+```
+
+</details>
+
+---
+
+### Solana / Metaplex (NFTs, Tokens & Launches)
+
+<details>
+<summary>View full CLAUDE.md sections</summary>
+
+#### Agent Description
+```markdown
+## Agent Description
+You are acting as a **Senior Solana/Metaplex Engineer** specializing in NFT infrastructure,
+token launches, and digital asset management on Solana using the Metaplex protocol suite.
+Your priorities are correct program interaction, metadata standards compliance, and efficient
+use of compressed NFTs for scale.
+```
+
+#### Key Commands
+```markdown
+### Key Commands
+- **Install Metaplex CLI**: `npm install -g @metaplex-foundation/mplx-cli`
+- **Create Core NFT**: `mplx core create`
+- **Create Collection**: `mplx core create-collection`
+- **Mint compressed NFT**: `mplx bubblegum mint`
+- **Setup Candy Machine**: `mplx candy-machine create`
+- **Launch token (Genesis)**: `mplx genesis launch create`
+- **Upload to Irys**: `mplx upload`
+- **Check balance**: `mplx balance`
+- **Anchor build** (custom programs): `anchor build`
+- **Anchor test**: `anchor test`
+```
+
+#### Relevant Skills
+```markdown
+## Installed Plugins & Skill Integration
+
+### Metaplex
+| Trigger | Skill |
+|---|---|
+| Any Metaplex operation: NFTs, tokens, compressed NFTs, candy machines, token launches, agents | `metaplex:metaplex` |
+
+Prefer CLI (`mplx`) for direct execution. Use Umi SDK when the task requires code.
+
+| Task | What the skill loads |
+|---|---|
+| Core NFTs/Collections (recommended for new projects) | `cli-core.md` or `sdk-core.md` |
+| Token Metadata (fungibles, legacy NFTs, pNFTs) | `cli-token-metadata.md` or `sdk-token-metadata.md` |
+| Compressed NFTs via Merkle trees | `cli-bubblegum.md` or `sdk-bubblegum.md` |
+| NFT drops with guards | `cli-candy-machine.md` |
+| Token launches (Genesis) | `cli-genesis.md` or `sdk-genesis.md` |
+| Agent Registry (on-chain identity, delegation) | `cli-agent.md` or `sdk-agent.md` |
+| Fungible token operations | `cli-toolbox.md` |
+
+### Trail of Bits — Security
+| Phase | Skill | Purpose |
+|---|---|---|
+| During development | `building-secure-contracts:solana-vulnerability-scanner` | Scans for arbitrary CPI, improper PDA validation, missing signer/ownership checks, sysvar spoofing |
+| During development | `building-secure-contracts:guidelines-advisor` | Architecture & best practices review |
+| Pre-audit | `building-secure-contracts:audit-prep-assistant` | Audit preparation checklist |
+| Assessment | `building-secure-contracts:code-maturity-assessor` | 9-category maturity scorecard |
+
+### Trail of Bits — Analysis
+| Trigger | Skill |
+|---|---|
+| Map attack surface | `entry-point-analyzer:entry-point-analyzer` |
+| Verify spec compliance | `spec-to-code-compliance:spec-to-code-compliance` |
+```
+
+#### Security Patterns
+```markdown
+### Security Patterns to Enforce
+- Always validate account ownership before reading or writing account data.
+- Verify all signers — never assume an account is signed without checking `is_signer`.
+- Derive and validate PDAs with proper bump seeds; store the bump on-chain.
+- Guard CPI calls — never allow arbitrary program IDs in cross-program invocations.
+- Use Anchor constraints (`#[account(has_one, constraint, seeds)]`) for declarative validation.
+- Validate sysvar accounts by address, not by deserialization alone.
+- Use Core over Token Metadata for new NFT projects (87% cheaper, built-in plugins, royalty enforcement).
+- Always upload metadata to Irys before minting — never use placeholder URIs in production.
+- For compressed NFTs, respect the batch limit (~100 via CLI; use SDK for larger batches).
+```
+
+#### NFT Decision Guide
+```markdown
+### NFT Standard Selection
+| Choose | When |
+|---|---|
+| **Core** | New NFT projects — lower cost (87% cheaper), plugins, royalty enforcement |
+| **Token Metadata** | Existing TM collections, need editions, pNFTs for legacy compatibility |
+| **Bubblegum** | Minting thousands+ of NFTs at minimal cost via Merkle trees |
+| **Candy Machine** | NFT drops with configurable guards (allowlists, payments, limits) |
 ```
 
 </details>
@@ -753,6 +880,7 @@ The plugins in this template were sourced from these Claude Code plugin marketpl
 |---|---|---|
 | Trail of Bits | `trailofbits/skills` | Vulnerability scanners, security advisors, compliance tools |
 | OpenZeppelin | `OpenZeppelin/openzeppelin-skills` | Contract setup, development, and upgrade skills |
+| Metaplex | `metaplex-foundation/skill` | Solana NFTs, tokens, cNFTs, candy machines, token launches, agents |
 | Cyfrin | `Cyfrin/solskill` | Additional Solidity skills (not pre-installed, add via `/plugin`) |
 
 To add a new marketplace:
@@ -784,17 +912,17 @@ To install a plugin from an added marketplace:
 
 ### Chain-Specific Skills
 
-| Blockchain | Vulnerability Scanner | OZ Setup | OZ Upgrade |
-|---|---|---|---|
-| Solidity/EVM | `secure-workflow-guide` (Slither, 70+ detectors) + `token-integration-analyzer` (20+ weird token patterns) | `setup-solidity-contracts` | `upgrade-solidity-contracts` |
-| StarkNet/Cairo | `cairo-vulnerability-scanner` (6 patterns) | `setup-cairo-contracts` | `upgrade-cairo-contracts` |
-| Solana | `solana-vulnerability-scanner` (6 patterns) | - | - |
-| Cosmos/CosmWasm | `cosmos-vulnerability-scanner` (54 patterns) | - | - |
-| Substrate/Polkadot | `substrate-vulnerability-scanner` (7 patterns) | - | - |
-| TON/FunC | `ton-vulnerability-scanner` (3 patterns) | - | - |
-| Algorand/TEAL | `algorand-vulnerability-scanner` (11 patterns) | - | - |
-| Arbitrum Stylus | - | `setup-stylus-contracts` | `upgrade-stylus-contracts` |
-| Stellar/Soroban | - | `setup-stellar-contracts` | `upgrade-stellar-contracts` |
+| Blockchain | Vulnerability Scanner | OZ Setup | OZ Upgrade | Ecosystem |
+|---|---|---|---|---|
+| Solidity/EVM | `secure-workflow-guide` (Slither, 70+ detectors) + `token-integration-analyzer` (20+ weird token patterns) | `setup-solidity-contracts` | `upgrade-solidity-contracts` | - |
+| StarkNet/Cairo | `cairo-vulnerability-scanner` (6 patterns) | `setup-cairo-contracts` | `upgrade-cairo-contracts` | - |
+| Solana | `solana-vulnerability-scanner` (6 patterns) | - | - | `metaplex:metaplex` (NFTs, tokens, cNFTs, launches) |
+| Cosmos/CosmWasm | `cosmos-vulnerability-scanner` (54 patterns) | - | - | - |
+| Substrate/Polkadot | `substrate-vulnerability-scanner` (7 patterns) | - | - | - |
+| TON/FunC | `ton-vulnerability-scanner` (3 patterns) | - | - | - |
+| Algorand/TEAL | `algorand-vulnerability-scanner` (11 patterns) | - | - | - |
+| Arbitrum Stylus | - | `setup-stylus-contracts` | `upgrade-stylus-contracts` | - |
+| Stellar/Soroban | - | `setup-stellar-contracts` | `upgrade-stellar-contracts` | - |
 
 ---
 

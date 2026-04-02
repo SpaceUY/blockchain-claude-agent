@@ -3,6 +3,7 @@
     "building-secure-contracts@trailofbits": true,
     "entry-point-analyzer@trailofbits": true,
     "spec-to-code-compliance@trailofbits": true,
-    "openzeppelin-skills@openzeppelin-skills": true
+    "openzeppelin-skills@openzeppelin-skills": true,
+    "metaplex@metaplex-foundation": true
   }
 }

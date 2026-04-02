@@ -33,7 +33,7 @@ Web3 is an adversarial environment by default, where logic flaws result in immed
 
 ## Installed Plugins & Skill Integration
 
-This project has 4 plugins installed locally in `.agents/plugins/`. Use them as described below.
+This project has 5 plugins installed locally in `.agents/plugins/`. Use them as described below.
 
 ### 1. OpenZeppelin Skills (`openzeppelin-skills`)
 
@@ -65,7 +65,29 @@ The core security toolkit. Invoke these skills at the right phase of development
 
 This skill categorizes entry points by access level (public, admin, role-restricted, contract-only) and excludes view/pure functions. Run it at the start of any audit or security review.
 
-### 4. Trail of Bits — Spec-to-Code Compliance (`spec-to-code-compliance`)
+### 4. Metaplex (`metaplex-skill`)
+
+Solana NFT and token infrastructure. **Prefer CLI (`mplx`) over SDK** for direct execution. Use SDK only when the task specifically requires code.
+
+| Trigger | Skill to invoke |
+|---|---|
+| Any Metaplex operation: NFTs, tokens, compressed NFTs, candy machines, token launches, agents | `metaplex:metaplex` |
+
+The skill uses a task router — once invoked, it reads the specific reference file needed:
+
+| Task | Reference loaded |
+|---|---|
+| Core NFTs/Collections (recommended for new projects) | `cli-core.md` or `sdk-core.md` |
+| Token Metadata (fungibles, legacy NFTs, pNFTs) | `cli-token-metadata.md` or `sdk-token-metadata.md` |
+| Compressed NFTs via Merkle trees (massive scale) | `cli-bubblegum.md` or `sdk-bubblegum.md` |
+| NFT drops with guards | `cli-candy-machine.md` |
+| Token launches (Genesis — fair distribution + liquidity graduation) | `cli-genesis.md` or `sdk-genesis.md` |
+| Agent Registry (on-chain identity, delegation) | `cli-agent.md` or `sdk-agent.md` |
+| Fungible token operations | `cli-toolbox.md` |
+| Off-chain metadata JSON format | `metadata-json.md` |
+| Account structures, PDAs, concepts | `concepts.md` |
+
+### 5. Trail of Bits — Spec-to-Code Compliance (`spec-to-code-compliance`)
 
 | Trigger | Skill to invoke |
 |---|---|
