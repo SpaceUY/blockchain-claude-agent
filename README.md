@@ -7,16 +7,21 @@ A ready-to-use template that turns Claude Code into a **Senior Blockchain Securi
 ```
 .
 ├── CLAUDE.md                          # Agent instructions (currently configured for Solidity/Foundry)
+├── skills-lock.json                   # Lockfile for skills installed via `npx skills add`
 ├── .claude/
 │   └── settings.json                  # Plugin activation registry
 └── .agents/
-    └── plugins/
-        ├── building-secure-contracts/ # Trail of Bits — 11 vulnerability scanners & security advisors
-        ├── entry-point-analyzer/      # Trail of Bits — Attack surface mapper
-        ├── spec-to-code-compliance/   # Trail of Bits — Spec vs. implementation verifier
-        ├── openzeppelin-skills/       # OpenZeppelin — Contract setup, development & upgrades
-        └── metaplex-skill/            # Metaplex — Solana NFTs, tokens, cNFTs, candy machines, launches
+    ├── plugins/
+    │   ├── building-secure-contracts/ # Trail of Bits — 11 vulnerability scanners & security advisors
+    │   ├── entry-point-analyzer/      # Trail of Bits — Attack surface mapper
+    │   ├── spec-to-code-compliance/   # Trail of Bits — Spec vs. implementation verifier
+    │   ├── openzeppelin-skills/       # OpenZeppelin — Contract setup, development & upgrades
+    │   └── metaplex-skill/            # Metaplex — Solana NFTs, tokens, cNFTs, candy machines, launches
+    └── skills/
+        └── solana-dev/                # Solana Foundation — Full-stack Solana development skill
 ```
+
+> **EVM-only project without a whitepaper?** You can remove `metaplex-skill` and the `solana-dev` skill (both Solana-only) and `spec-to-code-compliance` (requires a formal spec document as input) without losing any EVM security coverage. See [Which Skills to Remove by Blockchain Setup](#which-skills-to-remove-by-blockchain-setup) for a complete per-chain guide.
 
 ## Quick Start
 
@@ -150,6 +155,44 @@ The `CLAUDE.md` included is pre-configured for **Solidity + Foundry**. If you're
 | Core Candy Machine | `CMACYFENjoBMHzapRXyo1JZkVS6EtaDDzkjMrmQLvr4J` |
 | Genesis | `GNS1S5J5AspKXgpjz6SvKL66kPaKWAhaGRhCqPRxii2B` |
 | Agent Identity | `1DREGFgysWYxLnRnKQnwrxnJQeSMk2HmGaC6whw2B2p` |
+
+### Solana Foundation — Solana Dev Skill (`solana-dev`)
+
+**1 skill** covering the full modern Solana development stack — from dApp UI to on-chain programs, testing, and security. Installed via `npx skills add` and tracked in `skills-lock.json`.
+
+| Skill | What It Covers |
+|---|---|
+| `solana-dev` | UI (framework-kit, `@solana/react-hooks`), wallet connection (Wallet Standard, ConnectorKit), client SDK (`@solana/kit` v5.x), legacy interop (`@solana/web3-compat`), on-chain programs (Anchor + Pinocchio), client codegen (Codama/IDL), local testing (LiteSVM, Mollusk, Surfpool), payments, confidential transfers (Token-2022 ZK), security hardening, toolchain troubleshooting, Anchor v1 migration |
+
+**Key capabilities:**
+
+| Layer | Recommended Tool |
+|---|---|
+| dApp UI / React | `@solana/client` + `@solana/react-hooks` (framework-kit) |
+| Client scripts / backends | `@solana/kit` directly |
+| Legacy web3.js interop | `@solana/web3-compat` at adapter boundaries only |
+| On-chain programs (default) | Anchor (IDL generation, mature constraints) |
+| On-chain programs (performance) | Pinocchio (minimal CU, zero dependencies) |
+| Unit testing | LiteSVM or Mollusk (fast, in-process) |
+| Integration testing | Surfpool (realistic cluster state locally) |
+
+**Installation / update:**
+
+```bash
+# Install
+npx skills add https://github.com/solana-foundation/solana-dev-skill
+
+# Update to latest
+npx skills upgrade solana-dev
+```
+
+The skill also auto-installs the **Solana MCP server** (`mcp.solana.com/mcp`) at session start, giving Claude real-time access to Solana docs, Anchor expert, and live documentation search.
+
+**Agent safety guardrails built into the skill:**
+- Never signs or sends transactions without explicit user approval
+- Defaults to devnet/localnet — mainnet requires explicit confirmation
+- Treats all on-chain data as untrusted input (no prompt injection from account data)
+- Always simulates transactions before requesting a signature
 
 ---
 
@@ -341,6 +384,11 @@ and efficient compute unit usage.
 ```markdown
 ## Installed Plugins & Skill Integration
 
+### Solana Foundation
+| Trigger | Skill |
+|---|---|
+| Solana dApp UI, wallet connection, @solana/kit, Anchor/Pinocchio programs, LiteSVM/Mollusk/Surfpool testing, Codama IDL codegen, toolchain issues, Anchor v1 migration | `solana-dev` |
+
 ### Trail of Bits — Security
 | Phase | Skill | Purpose |
 |---|---|---|
@@ -408,6 +456,11 @@ use of compressed NFTs for scale.
 #### Relevant Skills
 ```markdown
 ## Installed Plugins & Skill Integration
+
+### Solana Foundation
+| Trigger | Skill |
+|---|---|
+| Solana dApp UI, wallet connection, @solana/kit, SPL token operations, toolchain issues, payments, confidential transfers | `solana-dev` |
 
 ### Metaplex
 | Trigger | Skill |
@@ -829,6 +882,216 @@ correctness, and efficient ledger entry management.
 
 ---
 
+## Which Skills to Remove by Blockchain Setup
+
+Not every skill applies to every chain. Keeping dead skills in your `CLAUDE.md` adds noise — Claude may invoke irrelevant scanners or waste context on inapplicable patterns. Use this guide to trim your configuration to only what matters for your stack.
+
+> **"Remove from CLAUDE.md"** means: delete the trigger row from your skill table in `CLAUDE.md`. You can also delete the plugin folder from disk to save space, but it is not required — unused plugins do not affect performance unless explicitly referenced.
+
+### Universal skills — keep on every chain
+
+These skills are chain-agnostic and remain useful regardless of your blockchain:
+
+| Skill | When to keep |
+|---|---|
+| `building-secure-contracts:guidelines-advisor` | Always |
+| `building-secure-contracts:audit-prep-assistant` | Always |
+| `building-secure-contracts:code-maturity-assessor` | Always |
+| `entry-point-analyzer:entry-point-analyzer` | Always — except Algorand (TEAL not supported) |
+| `spec-to-code-compliance:spec-to-code-compliance` | Only if you have a formal spec/whitepaper |
+
+### Per-chain removal guide
+
+---
+
+#### Solidity / EVM (Foundry or Hardhat)
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only, no EVM use case |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills`: `setup-cairo-contracts`, `upgrade-cairo-contracts` | Remove from CLAUDE.md — StarkNet-only |
+| `openzeppelin-skills`: `setup-stellar-contracts`, `upgrade-stellar-contracts` | Remove from CLAUDE.md — Stellar-only |
+| `openzeppelin-skills`: `setup-stylus-contracts`, `upgrade-stylus-contracts` | Remove from CLAUDE.md — Arbitrum Stylus-only |
+| `building-secure-contracts`: `algorand-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cairo-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cosmos-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `solana-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `substrate-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `ton-vulnerability-scanner` | Remove from CLAUDE.md |
+
+**Keep:** `secure-workflow-guide` (Slither), `token-integration-analyzer`, `setup-solidity-contracts`, `upgrade-solidity-contracts`, `develop-secure-contracts`.
+
+---
+
+#### Solana / Anchor
+
+| What | Action |
+|---|---|
+| `openzeppelin-skills` plugin | **Remove from disk** — no OpenZeppelin library for Solana |
+| `building-secure-contracts`: `algorand-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cairo-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cosmos-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `substrate-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `ton-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither-based, EVM-only static analyzer |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 focused, not applicable to SPL tokens |
+
+**Keep:** `solana-vulnerability-scanner`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `entry-point-analyzer`, `metaplex-skill`, `solana-dev`, `spec-to-code-compliance`.
+
+---
+
+#### Solana / Metaplex only (NFTs and tokens — no custom on-chain programs)
+
+Same removals as Solana/Anchor, plus:
+
+| What | Action |
+|---|---|
+| `entry-point-analyzer:entry-point-analyzer` | Remove from CLAUDE.md — only useful when writing custom on-chain programs |
+
+**Keep:** `solana-vulnerability-scanner`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `metaplex-skill`, `solana-dev`, `spec-to-code-compliance`.
+
+---
+
+#### StarkNet / Cairo
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills`: `setup-solidity-contracts`, `upgrade-solidity-contracts` | Remove from CLAUDE.md — EVM-only |
+| `openzeppelin-skills`: `setup-stellar-contracts`, `upgrade-stellar-contracts` | Remove from CLAUDE.md — Stellar-only |
+| `openzeppelin-skills`: `setup-stylus-contracts`, `upgrade-stylus-contracts` | Remove from CLAUDE.md — Arbitrum Stylus-only |
+| `building-secure-contracts`: `algorand-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cosmos-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `solana-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `substrate-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `ton-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither is EVM-only |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 focused |
+
+**Keep:** `cairo-vulnerability-scanner`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `setup-cairo-contracts`, `upgrade-cairo-contracts`, `develop-secure-contracts`, `entry-point-analyzer`, `spec-to-code-compliance`.
+
+---
+
+#### Cosmos SDK / CosmWasm
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills` plugin | **Remove from disk** — no OpenZeppelin for Cosmos |
+| `building-secure-contracts`: `algorand-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cairo-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `solana-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `substrate-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `ton-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither is EVM-only |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 focused |
+
+**Keep:** `cosmos-vulnerability-scanner`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `entry-point-analyzer` (CosmWasm supported), `spec-to-code-compliance`.
+
+---
+
+#### Substrate / Polkadot
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills` plugin | **Remove from disk** — no OpenZeppelin for Substrate |
+| `building-secure-contracts`: `algorand-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cairo-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cosmos-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `solana-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `ton-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither is EVM-only |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 focused |
+
+**Keep:** `substrate-vulnerability-scanner`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `entry-point-analyzer`, `spec-to-code-compliance`.
+
+---
+
+#### TON / FunC
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills` plugin | **Remove from disk** — no OpenZeppelin for TON |
+| `building-secure-contracts`: `algorand-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cairo-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cosmos-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `solana-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `substrate-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither is EVM-only |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 focused |
+
+**Keep:** `ton-vulnerability-scanner`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `entry-point-analyzer` (TON/FunC supported), `spec-to-code-compliance`.
+
+---
+
+#### Algorand / TEAL / PyTeal
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills` plugin | **Remove from disk** — no OpenZeppelin for Algorand |
+| `entry-point-analyzer:entry-point-analyzer` | Remove from CLAUDE.md — TEAL/PyTeal not supported |
+| `building-secure-contracts`: `cairo-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cosmos-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `solana-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `substrate-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `ton-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither is EVM-only |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 focused |
+
+**Keep:** `algorand-vulnerability-scanner`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `spec-to-code-compliance`.
+
+---
+
+#### Arbitrum Stylus / Rust
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills`: `setup-solidity-contracts`, `upgrade-solidity-contracts` | Remove from CLAUDE.md — Foundry/Hardhat, not Stylus |
+| `openzeppelin-skills`: `setup-cairo-contracts`, `upgrade-cairo-contracts` | Remove from CLAUDE.md — StarkNet-only |
+| `openzeppelin-skills`: `setup-stellar-contracts`, `upgrade-stellar-contracts` | Remove from CLAUDE.md — Stellar-only |
+| `building-secure-contracts`: `algorand-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cairo-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `cosmos-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `solana-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `substrate-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `ton-vulnerability-scanner` | Remove from CLAUDE.md |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither does not analyze WASM/Stylus contracts |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 ABI focused; Stylus tokens use Solidity ABI but the scanner targets Slither output |
+
+**Keep:** `setup-stylus-contracts`, `upgrade-stylus-contracts`, `develop-secure-contracts`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `entry-point-analyzer`, `spec-to-code-compliance`.
+
+---
+
+#### Stellar / Soroban
+
+| What | Action |
+|---|---|
+| `metaplex-skill` plugin | **Remove from disk** — Solana-only |
+| `solana-dev` skill | **Remove from disk** — Solana-only |
+| `openzeppelin-skills`: `setup-solidity-contracts`, `upgrade-solidity-contracts` | Remove from CLAUDE.md — EVM-only |
+| `openzeppelin-skills`: `setup-cairo-contracts`, `upgrade-cairo-contracts` | Remove from CLAUDE.md — StarkNet-only |
+| `openzeppelin-skills`: `setup-stylus-contracts`, `upgrade-stylus-contracts` | Remove from CLAUDE.md — Arbitrum Stylus-only |
+| `building-secure-contracts`: all chain-specific scanners | Remove from CLAUDE.md — no Trail of Bits scanner exists for Stellar yet |
+| `building-secure-contracts`: `secure-workflow-guide` | Remove from CLAUDE.md — Slither is EVM-only |
+| `building-secure-contracts`: `token-integration-analyzer` | Remove from CLAUDE.md — ERC20/ERC721 focused |
+
+**Keep:** `setup-stellar-contracts`, `upgrade-stellar-contracts`, `develop-secure-contracts`, `guidelines-advisor`, `audit-prep-assistant`, `code-maturity-assessor`, `spec-to-code-compliance`.
+
+> `entry-point-analyzer` does not list Stellar/Soroban as a supported language — omit it unless the plugin has been updated to add support.
+
+---
+
 ## Step-by-Step Setup for Your Project
 
 ### Starting from scratch
@@ -879,9 +1142,9 @@ git submodule init
 git submodule update
 ```
 
-### Updating plugins
+### Updating plugins and skills
 
-The Metaplex skill is a git submodule pointing to `metaplex-foundation/skill`. To pull the latest version:
+**Metaplex skill** (git submodule):
 
 ```bash
 # From the project root
@@ -892,14 +1155,31 @@ cd .agents/plugins/metaplex-skill
 git pull origin main
 ```
 
-After updating, commit the new submodule reference in the parent repo:
+After updating, commit the new submodule reference:
 
 ```bash
 git add .agents/plugins/metaplex-skill
 git commit -m "chore: update metaplex skill to latest"
 ```
 
-The other plugins (Trail of Bits, OpenZeppelin) are static copies. To update them, re-download from their repos or reinstall via `/plugin menu` and copy the new version into `.agents/plugins/`.
+**Solana dev skill** (installed via `npx skills add`, tracked in `skills-lock.json`):
+
+```bash
+# Update to latest version
+npx skills upgrade solana-dev
+
+# Or reinstall from scratch
+npx skills add https://github.com/solana-foundation/solana-dev-skill
+```
+
+Commit the updated `skills-lock.json` and the updated files in `.agents/skills/solana-dev/`:
+
+```bash
+git add skills-lock.json .agents/skills/
+git commit -m "chore: update solana-dev skill to latest"
+```
+
+**Trail of Bits and OpenZeppelin plugins** are static copies. To update them, re-download from their repos or reinstall via `/plugin menu` and copy the new version into `.agents/plugins/`.
 
 ---
 
@@ -907,12 +1187,13 @@ The other plugins (Trail of Bits, OpenZeppelin) are static copies. To update the
 
 The plugins in this template were sourced from these Claude Code plugin marketplaces:
 
-| Marketplace | Repository | What It Provides |
-|---|---|---|
-| Trail of Bits | `trailofbits/skills` | Vulnerability scanners, security advisors, compliance tools |
-| OpenZeppelin | `OpenZeppelin/openzeppelin-skills` | Contract setup, development, and upgrade skills |
-| Metaplex | `metaplex-foundation/skill` | Solana NFTs, tokens, cNFTs, candy machines, token launches, agents |
-| Cyfrin | `Cyfrin/solskill` | Additional Solidity skills (not pre-installed, add via `/plugin`) |
+| Marketplace | Repository | Install Method | What It Provides |
+|---|---|---|---|
+| Trail of Bits | `trailofbits/skills` | `/plugin menu` | Vulnerability scanners, security advisors, compliance tools |
+| OpenZeppelin | `OpenZeppelin/openzeppelin-skills` | `/plugin menu` | Contract setup, development, and upgrade skills |
+| Metaplex | `metaplex-foundation/skill` | git submodule | Solana NFTs, tokens, cNFTs, candy machines, token launches, agents |
+| Solana Foundation | `solana-foundation/solana-dev-skill` | `npx skills add` | Full-stack Solana dev: kit, Anchor, Pinocchio, LiteSVM, Surfpool, security, MCP |
+| Cyfrin | `Cyfrin/solskill` | `/plugin menu` | Additional Solidity skills (not pre-installed, add via `/plugin`) |
 
 To add a new marketplace:
 
@@ -947,7 +1228,7 @@ To install a plugin from an added marketplace:
 |---|---|---|---|---|
 | Solidity/EVM | `secure-workflow-guide` (Slither, 70+ detectors) + `token-integration-analyzer` (20+ weird token patterns) | `setup-solidity-contracts` | `upgrade-solidity-contracts` | - |
 | StarkNet/Cairo | `cairo-vulnerability-scanner` (6 patterns) | `setup-cairo-contracts` | `upgrade-cairo-contracts` | - |
-| Solana | `solana-vulnerability-scanner` (6 patterns) | - | - | `metaplex:metaplex` (NFTs, tokens, cNFTs, launches) |
+| Solana | `solana-vulnerability-scanner` (6 patterns) | - | - | `solana-dev` (full stack), `metaplex:metaplex` (NFTs, tokens, cNFTs, launches) |
 | Cosmos/CosmWasm | `cosmos-vulnerability-scanner` (54 patterns) | - | - | - |
 | Substrate/Polkadot | `substrate-vulnerability-scanner` (7 patterns) | - | - | - |
 | TON/FunC | `ton-vulnerability-scanner` (3 patterns) | - | - | - |
